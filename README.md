@@ -1,3 +1,3 @@
 ## AIProject
-#Household guest detection multiagent system 
+Household guest detection multiagent system 
 ----------------------------------------------------------------------------------------------------------
