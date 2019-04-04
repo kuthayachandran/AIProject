@@ -3,21 +3,28 @@ import face_recognition, argparse, pickle, cv2, os, time, sys, glob
 from random import randint
 import numpy as np
 
+#Used in order to reengage memory encodings. Alternate versioning with integrated networked agents
+#could allow for encodings to be saved and updates
+
 def processMemoryEncodings(imagePaths):
 	knownEncodings = []
 	correspondImage = []
 	knownNames = []
 	for (i, imagePath) in enumerate(imagePaths):
 		name = imagePath.split(os.path.sep)[-2]
+		time.sleep(1)
 		print("Processing memories of",name,"{}/{}".format(i+1, len(imagePaths)))
 		image = cv2.imread(imagePath)
 		rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 		boxes = face_recognition.face_locations(rgb, model="hog")
 		encodings = face_recognition.face_encodings(rgb, boxes)
+		print(encodings)
 		for encoding in encodings:
 			knownEncodings.append(encoding)
 			knownNames.append(name)
 	return knownEncodings, knownNames
+
+#Used to produce comparison encodings for unknown encounter images
 
 def produceEncounterEncodings(comparePath, knownEncodings, knownNames):
 	encounters = []
@@ -43,6 +50,9 @@ def produceEncounterEncodings(comparePath, knownEncodings, knownNames):
 			encounterEncodings.append(encounterEncoding)
 			correspondImage.append(image)
 	return data, encounterEncodings, encounters, correspondImage
+
+#Active comparison is produced here between new encounter encoding and generated 
+#memory image encodings
 
 def findMatches(knownEncodings, encounterEncodings, encounters, data, correspondImage):
 	names = []
@@ -74,6 +84,9 @@ def findMatches(knownEncodings, encounterEncodings, encounters, data, correspond
 				print("Too many faces in the image to process.")
 				sys.exit()
 	return names
+
+#Active method to allow for conveying matches to user of new encounter guest to 
+#referenced memories
 
 def printMatches(names, encounters, lengthCount, recognizedGuests, checks, knownEncodings):
 	i = 0
@@ -109,11 +122,14 @@ def printMatches(names, encounters, lengthCount, recognizedGuests, checks, known
 			recognizedGuests.append(names[i])
 		i += 1
 
+#Key method called when unknown guest encounter is provided naming from
+#user
+
 def rememberUnknowns(names, encounters, checks):
 	count = 0
 	for i in checks:
 		if i == 0:
-			os.system("clear")
+			#os.system("clear")
 			cv2.imshow("Who is this?: "+names[count], encounters[count])
 			cv2.waitKey(0)
 			cv2.destroyAllWindows()
@@ -140,6 +156,10 @@ def rememberUnknowns(names, encounters, checks):
 					print("\n\rThis person will not be remembered.")
 		count += 1
 
+#Used to remove encounters from unknown reference space. Even if user never identifies
+#an unknown, no need to hold the reference since only convolutes processing time
+#for subsequent encounters
+
 def deleteEncounters():
 	comparePath = list(paths.list_images("/home/brady/Code/AIProject/unknown/"))
 	for image in comparePath:
@@ -148,6 +168,9 @@ def deleteEncounters():
 				os.unlink(image)
 		except Exception:
 			pass
+
+#Method to engage all required methods for facial recognition of the learning
+#brain agent
 
 def testEncounter():
 	guests = []
@@ -180,6 +203,10 @@ print("Processing a new request...")
 
 recognizedGuests = testEncounter()
 
+#Wipes command line output if required.
+
 os.system("clear")
+
+#Prints findings of match method to console (command line)
 
 print("\n\rMATCHES TO KNOWN GUESTS:", recognizedGuests, "\n\r")
